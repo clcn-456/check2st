@@ -94,27 +94,15 @@
 
           const closeDialog = () => setDialog(prev => ({ ...prev, isOpen: false }));
 
-          // โหลดข้อมูลที่บันทึกไว้ในเบราว์เซอร์เมื่อเปิดหน้าเว็บ
+          // รีเซ็ตข้อมูลทุกครั้งที่เปิดหรือรีเฟรชหน้าเว็บ
           useEffect(() => {
-            const savedStudents = localStorage.getItem('githubApp_students');
-            const savedAttendance = localStorage.getItem('githubApp_attendanceData');
+            // ล้างข้อมูลที่อาจค้างอยู่ในความจำเครื่องจากเวอร์ชันก่อนหน้า
+            localStorage.removeItem('githubApp_students');
+            localStorage.removeItem('githubApp_attendanceData');
             
-            if (savedStudents) {
-              try { setStudents(JSON.parse(savedStudents)); } catch (e) { console.error("Error loading students", e); }
-            }
-            if (savedAttendance) {
-              try { setAttendanceData(JSON.parse(savedAttendance)); } catch (e) { console.error("Error loading attendance", e); }
-            }
+            // ไม่ต้องสั่งให้บันทึกหรือดึงข้อมูลเดิมมาแสดงอีกต่อไป
+            // ทำให้ทุกครั้งที่โหลดหน้าเว็บใหม่ จะได้หน้าจอที่ว่างเปล่าเสมอ
           }, []);
-
-          // บันทึกข้อมูลลงเบราว์เซอร์อัตโนมัติทุกครั้งที่มีการเปลี่ยนแปลง
-          useEffect(() => {
-            localStorage.setItem('githubApp_students', JSON.stringify(students));
-          }, [students]);
-
-          useEffect(() => {
-            localStorage.setItem('githubApp_attendanceData', JSON.stringify(attendanceData));
-          }, [attendanceData]);
 
           // จัดการเมื่อเลือกอัปโหลดไฟล์ Excel
           const handleFileUpload = (e) => {
@@ -335,7 +323,30 @@
             ws['!merges'].push({ s: {r:0, c:0}, e: {r:0, c:6} }); // ผสาน A1 ถึง G1
 
             window.XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-            window.XLSX.writeFile(wb, `เช็คชื่อ_${currentDate}.xlsx`);
+            
+            // เช็คว่าเปิดผ่าน In-App Browser (เช่น LINE, Facebook) หรือไม่
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const isInAppBrowser = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Line") > -1);
+
+            if (isInAppBrowser) {
+                showConfirm(
+                    "คำแนะนำการดาวน์โหลดบนมือถือ",
+                    "คุณกำลังเปิดเว็บผ่านแอป LINE หรือ Facebook ซึ่งมักจะ 'บล็อก' การดาวน์โหลดไฟล์\n\nหากกดตกลงแล้วไฟล์ไม่ยอมโหลด แนะนำให้กดปุ่ม 3 จุด (มุมจอ) แล้วเลือก 'เปิดในเบราว์เซอร์ / Safari / Chrome' นะครับ",
+                    () => {
+                        try { window.XLSX.writeFile(wb, `เช็คชื่อ_${currentDate}.xlsx`); } catch(e){}
+                        closeDialog();
+                    },
+                    () => closeDialog(),
+                    "ลองดาวน์โหลดดู",
+                    "ยกเลิก"
+                );
+            } else {
+                try {
+                    window.XLSX.writeFile(wb, `เช็คชื่อ_${currentDate}.xlsx`);
+                } catch (error) {
+                    showAlert("พบปัญหา", "ไม่สามารถดาวน์โหลดได้ แนะนำให้ลองเปิดเว็บผ่าน Chrome หรือ Safari ครับ");
+                }
+            }
           };
 
           return (
