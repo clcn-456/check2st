@@ -94,15 +94,27 @@
 
           const closeDialog = () => setDialog(prev => ({ ...prev, isOpen: false }));
 
-          // รีเซ็ตข้อมูลทุกครั้งที่เปิดหรือรีเฟรชหน้าเว็บ
+          // โหลดข้อมูลจาก LocalStorage
           useEffect(() => {
-            // ล้างข้อมูลที่อาจค้างอยู่ในความจำเครื่องจากเวอร์ชันก่อนหน้า
-            localStorage.removeItem('githubApp_students');
-            localStorage.removeItem('githubApp_attendanceData');
+            const savedStudents = localStorage.getItem('githubApp_students');
+            const savedAttendance = localStorage.getItem('githubApp_attendanceData');
             
-            // ไม่ต้องสั่งให้บันทึกหรือดึงข้อมูลเดิมมาแสดงอีกต่อไป
-            // ทำให้ทุกครั้งที่โหลดหน้าเว็บใหม่ จะได้หน้าจอที่ว่างเปล่าเสมอ
+            if (savedStudents) {
+              try { setStudents(JSON.parse(savedStudents)); } catch (e) { console.error("Error loading students", e); }
+            }
+            if (savedAttendance) {
+              try { setAttendanceData(JSON.parse(savedAttendance)); } catch (e) { console.error("Error loading attendance", e); }
+            }
           }, []);
+
+          // บันทึกข้อมูลลง LocalStorage ทุกครั้งที่มีการเปลี่ยนแปลง
+          useEffect(() => {
+            localStorage.setItem('githubApp_students', JSON.stringify(students));
+          }, [students]);
+
+          useEffect(() => {
+            localStorage.setItem('githubApp_attendanceData', JSON.stringify(attendanceData));
+          }, [attendanceData]);
 
           // จัดการเมื่อเลือกอัปโหลดไฟล์ Excel
           const handleFileUpload = (e) => {
@@ -626,3 +638,6 @@
     </script>
 </body>
 </html>
+```
+
+*หมายเหตุ: ในโค้ดใหม่นี้ ผมได้เพิ่มส่วนที่จะไม่ล้างข้อมูลอัตโนมัติแล้วครับ เพื่อให้ข้อมูลที่คุณครูเพิ่มเข้าไปยังคงอยู่จนกว่าจะกดปุ่ม "ล้างข้อมูลทั้งหมดในระบบ" ด้วยตัวเองครับ* ลองตรวจสอบและทำตามขั้นตอนดูนะครับ ถ้าติดปัญหาตรงไหนแจ้งได้เลยครับ
