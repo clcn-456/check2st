@@ -94,27 +94,10 @@
 
           const closeDialog = () => setDialog(prev => ({ ...prev, isOpen: false }));
 
-          // โหลดข้อมูลจาก LocalStorage
-          useEffect(() => {
-            const savedStudents = localStorage.getItem('githubApp_students');
-            const savedAttendance = localStorage.getItem('githubApp_attendanceData');
-            
-            if (savedStudents) {
-              try { setStudents(JSON.parse(savedStudents)); } catch (e) { console.error("Error loading students", e); }
-            }
-            if (savedAttendance) {
-              try { setAttendanceData(JSON.parse(savedAttendance)); } catch (e) { console.error("Error loading attendance", e); }
-            }
-          }, []);
-
-          // บันทึกข้อมูลลง LocalStorage ทุกครั้งที่มีการเปลี่ยนแปลง
-          useEffect(() => {
-            localStorage.setItem('githubApp_students', JSON.stringify(students));
-          }, [students]);
-
-          useEffect(() => {
-            localStorage.setItem('githubApp_attendanceData', JSON.stringify(attendanceData));
-          }, [attendanceData]);
+          /* 
+            ถูกนำออกแล้ว: ระบบจำข้อมูลลง LocalStorage 
+            เพื่อให้แอปเป็นค่าว่าง (เริ่มต้นใหม่) เสมอเมื่อเปิดหน้าเว็บใหม่
+          */
 
           // จัดการเมื่อเลือกอัปโหลดไฟล์ Excel
           const handleFileUpload = (e) => {
@@ -193,7 +176,7 @@
             }
 
             if (newStudents.length > 0) {
-                // เปลี่ยนเป็นแทนที่รายชื่อทั้งหมดโดยอัตโนมัติ ไม่ต้องมี popup ถาม
+                // อัปเดตรายชื่อใหม่แทนที่ทั้งหมด "โดยไม่ต้องถาม" 
                 setStudents(newStudents);
             } else {
                 showAlert("ไม่พบข้อมูล", "ไม่พบรายชื่อในไฟล์ที่คุณนำเข้า โปรดตรวจสอบรูปแบบข้อมูลอีกครั้งครับ");
@@ -222,19 +205,17 @@
 
           // ลบนักเรียนออกจากระบบ
           const deleteStudent = (id) => {
-              showConfirm("ยืนยันการลบ", "ต้องการลบรายชื่อนักเรียนคนนี้ออกจากระบบใช่หรือไม่?", () => {
+              showConfirm("ยืนยันการลบ", "ต้องการลบรายชื่อนักเรียนคนนี้ออกจากหน้ากระดานใช่หรือไม่?", () => {
                   setStudents(students.filter(s => s.id !== id));
                   closeDialog();
               });
           }
 
-          // ล้างข้อมูลการใช้งานแอปพลิเคชันทั้งหมด
+          // ล้างข้อมูลหน้ากระดาน
           const clearAllData = () => {
-              showConfirm("คำเตือน!", "ต้องการล้างรายชื่อและประวัติการเช็คชื่อทั้งหมดหรือไม่? ข้อมูลนี้ไม่สามารถกู้คืนได้หาไม่ได้ดาวน์โหลด Excel ไว้", () => {
+              showConfirm("คำเตือน!", "ต้องการล้างหน้ากระดานนี้ทิ้งทั้งหมดใช่หรือไม่?", () => {
                   setStudents([]);
                   setAttendanceData({});
-                  localStorage.removeItem('githubApp_students');
-                  localStorage.removeItem('githubApp_attendanceData');
                   closeDialog();
               }, () => closeDialog(), "ล้างข้อมูลทั้งหมด", "ยกเลิก");
           }
@@ -358,7 +339,6 @@
                   <div className="text-center sm:text-left">
                     <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 justify-center sm:justify-start">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        {/* แก้ไขชื่อหัวเว็บ (Header) ตรงนี้ */}
                         ระบบเช็คชื่อ - โรงเรียนบ้านโคก
                     </h1>
                   </div>
@@ -414,7 +394,7 @@
                         onClick={clearAllData}
                         className="w-full text-slate-400 hover:text-red-500 hover:bg-red-50 py-2.5 rounded-xl text-sm font-medium transition-all"
                      >
-                         ล้างข้อมูลทั้งหมดในระบบ
+                         ล้างข้อมูลทั้งหมดในหน้านี้
                      </button>
                   </div>
 
@@ -508,7 +488,7 @@
                                                         ))}
                                                         {currentStatusKey && (
                                                             <button onClick={() => markAttendance(student.id, null)} className="px-2 text-xs text-slate-400 hover:text-slate-600 transition-colors" title="ล้างค่า">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l-2-2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                                             </button>
                                                         )}
                                                     </div>
@@ -626,4 +606,3 @@
     </script>
 </body>
 </html>
-```
